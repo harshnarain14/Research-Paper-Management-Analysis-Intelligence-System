@@ -1,9 +1,8 @@
 # This file implements a basic Retrieval-Augmented Generation (RAG) pipeline
 # with source attribution using GROQ LLM
 
-from langchain_groq import ChatGroq
-from dotenv import load_dotenv
 import os
+from langchain_groq import ChatGroq
 from pydantic import SecretStr
 
 
@@ -12,35 +11,32 @@ def generate_answer_with_sources(
     retrieved_chunks: list
 ) -> dict:
     """
-    This function generates an answer using GROQ LLM
-    and also returns source information.
+    Generate an answer using GROQ LLM with clear source attribution.
 
-    Output:
+    Returns:
     {
         "answer": "...",
         "sources": [...]
     }
-
-    At this stage:
-    - We explicitly track which sections were used
-    - This improves transparency and trust
     """
 
-    # Load environment variables from .env file
-    load_dotenv()
+    # Read GROQ API key from environment (Streamlit Secrets compatible)
+    groq_key = os.getenv("GROQ_API_KEY")
+
+    if not groq_key:
+        raise RuntimeError(
+            "GROQ_API_KEY not found. Please set it in environment variables or Streamlit Secrets."
+        )
 
     # Initialize GROQ chat model
-    groq_key = os.getenv("GROQ_API_KEY")
     llm = ChatGroq(
         model="llama-3.3-70b-versatile",
-        api_key=SecretStr(groq_key) if groq_key is not None else None,
+        api_key=SecretStr(groq_key),
         temperature=0.2
     )
 
     # Combine retrieved chunk texts into one context string
-    context = "\n\n".join(
-        chunk["text"] for chunk in retrieved_chunks
-    )
+    context = "\n\n".join(chunk["text"] for chunk in retrieved_chunks)
 
     # Build list of unique sources used
     sources = []
@@ -53,7 +49,7 @@ def generate_answer_with_sources(
         if source_info not in sources:
             sources.append(source_info)
 
-    # Construct a grounded prompt
+    # Construct a grounded academic prompt
     prompt = f"""
 You are an academic research assistant.
 Answer the question strictly using the provided context.
@@ -71,7 +67,6 @@ Answer:
     # Invoke the GROQ LLM
     response = llm.invoke(prompt)
 
-    # Return answer along with sources
     return {
         "answer": response.content,
         "sources": sources

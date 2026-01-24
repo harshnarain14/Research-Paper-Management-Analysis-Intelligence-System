@@ -1,8 +1,6 @@
-﻿import pdfplumber
-try:
-    import fitz  # PyMuPDF
-except Exception:
-    fitz = None
+﻿
+import pdfplumber
+from models.paper_models import PaperSection, ResearchPaper
 
 
 def open_pdf(pdf_path: str):
@@ -45,24 +43,6 @@ def extract_full_text(pdf):
 
     # Return the combined text from all pages
     return full_text
-
-
-def extract_text_with_pymupdf(pdf_path: str) -> str:
-    """Fallback text extraction using PyMuPDF (works for many PDFs and scanned+OCRed files)."""
-    if fitz is None:
-        raise RuntimeError("PyMuPDF (fitz) is not installed")
-
-    doc = fitz.open(pdf_path)
-    texts = []
-    for page in doc:
-        try:
-            page_text = page.get_text("text")
-        except Exception:
-            page_text = ""
-        if page_text:
-            texts.append(page_text)
-    doc.close()
-    return "\n".join(texts)
 def basic_text_cleaning(text: str) -> str:
     """
     This function performs very basic cleaning on raw extracted text.
@@ -140,7 +120,6 @@ def split_text_into_sections(text: str) -> dict:
     return sections
 # Import the PaperSection data model
 # Import directly from models.paper_models to avoid package import issues
-from models.paper_models import PaperSection
 
 
 def convert_sections_to_models(sections: dict) -> list:
@@ -174,7 +153,6 @@ def convert_sections_to_models(sections: dict) -> list:
     return section_models
 # Import the ResearchPaper data model
 # Import directly from models.paper_models to avoid package import issues
-from models.paper_models import ResearchPaper
 
 
 def build_research_paper(
@@ -193,24 +171,11 @@ def build_research_paper(
     - This keeps the pipeline simple and explainable
     """
 
-    # Step 1: Try to open the PDF file and extract using pdfplumber
-    raw_text = ""
-    try:
-        pdf = open_pdf(pdf_path)
-        try:
-            # Step 2: Extract raw text from all pages
-            raw_text = extract_full_text(pdf)
-        finally:
-            try:
-                pdf.close()
-            except Exception:
-                pass
-    except Exception:
-        # Fallback: try PyMuPDF to extract text directly from file
-        try:
-            raw_text = extract_text_with_pymupdf(pdf_path)
-        except Exception:
-            raw_text = ""
+    # Step 1: Open the PDF file
+    pdf = open_pdf(pdf_path)
+
+    # Step 2: Extract raw text from all pages
+    raw_text = extract_full_text(pdf)
 
     # Step 3: Apply basic text cleaning
     cleaned_text = basic_text_cleaning(raw_text)

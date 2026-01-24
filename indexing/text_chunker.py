@@ -2,7 +2,8 @@
 # These chunks will later be converted into embeddings
 
 from typing import List
-from models import PaperSection
+from models.paper_models import PaperSection
+
 
 
 def chunk_sections(

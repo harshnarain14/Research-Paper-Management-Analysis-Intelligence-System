@@ -1,22 +1,23 @@
 # Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Virtual environment
+# Virtual environments
 .venv/
+venv/
 
-# Environment variables
-.env
-
-# Local data
+# Data & PDFs
 data/
 *.pdf
 
-# FAISS / indexes
-*.index
-*.faiss
+# Env & secrets
+.env
 
-# OS
+# Tests
+test_*.py
+
+# OS junk
 .DS_Store
 Thumbs.db
-
